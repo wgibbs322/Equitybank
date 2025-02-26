@@ -19,6 +19,12 @@
             color: #d92d2a;
         }
 
+        .logo-img {
+    width: 150px; /* Adjust the width as needed */
+    height: auto; /* Maintains aspect ratio */
+    max-height: 60px; /* Ensures it fits within the header */
+    object-fit: contain; /* Prevents distortion */
+}
 
 
         body {
@@ -255,7 +261,7 @@
 
 <body>
     <header class="header">
-        <h2>Equity Bank</h2>
+        <img src="Equitylogo.jpeg" alt="Equity Logo" class="logo-img">
         <nav class="header-nav">
             <a href="Home.html">Account Overview</a>
             <a href="transactionhistory.html">Transaction History</a>
