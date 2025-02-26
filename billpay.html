@@ -12,6 +12,14 @@
             background-color: #f8f9fa;
         }
 
+
+        .logo-img {
+    width: 150px; /* Adjust the width as needed */
+    height: auto; /* Maintains aspect ratio */
+    max-height: 60px; /* Ensures it fits within the header */
+    object-fit: contain; /* Prevents distortion */
+}
+
         /* Header Styles */
         .header {
             background-color: #e60000; /* Changed blue to red */
@@ -228,7 +236,7 @@
 <body>
     <!-- Chase Bank Header -->
     <header class="header">
-        <h2>Equity Bank</h2>
+        <img src="Equitylogo.jpeg" alt="Equity Logo" class="logo-img">
         <nav class="header-nav">
             <a href="Home.html">Account Overview</a>
             <a href="transactionhistory.html">Transaction History</a>
