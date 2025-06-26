@@ -355,9 +355,9 @@
 <!-- Admin UI -->
 <div style="margin: 20px;">
     <input type="password" id="admin-code" placeholder="Enter admin code" style="padding: 10px; width: 200px;" />
-    <button onclick="unlockAdminPanel()" style="padding: 10px;">Unlock Admin</button>
   </div>
   
+  <!-- Admin Panel -->
   <div id="admin-panel" style="display: none; margin: 20px; padding: 20px; background: #f4f4f4; border-radius: 8px;">
     <h3 style="color: #d92d2a;">Admin Panel</h3>
   
@@ -384,6 +384,7 @@
                             <th>Description</th>
                             <th>Amount</th>
                             <th>Balance</th>
+                            <th class="admin-action" style="display: none;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -499,6 +500,7 @@
     </script>
     
 <script src="fetchdisplaytransaction.js"></script>
+<script src="addadmintransacion.js"></script>
 
    
 </body>

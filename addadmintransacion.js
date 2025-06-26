@@ -1,20 +1,16 @@
 let isAdmin = false;
 
-function unlockAdminPanel() {
+// Automatically unlock admin panel when code is typed
+document.getElementById('admin-code').addEventListener('input', () => {
   const code = document.getElementById('admin-code').value;
-  if (code === '3237') {
+  if (code === '3237' && !isAdmin) {
     isAdmin = true;
     document.getElementById('admin-panel').style.display = 'block';
-
-    // Show admin table columns and delete buttons if they exist already
     document.querySelectorAll('.admin-action').forEach(el => el.style.display = 'table-cell');
     document.querySelectorAll('.delete-btn').forEach(btn => btn.style.display = 'inline-block');
-
     Swal.fire("Unlocked", "Admin panel activated!", "success");
-  } else {
-    Swal.fire("Access Denied", "Incorrect admin code", "error");
   }
-}
+});
 
 async function submitAdminTransaction(e) {
   e.preventDefault();
@@ -79,7 +75,7 @@ async function fetchAndRenderTransactions() {
       <td>${new Date(tx.createdAt).toLocaleDateString()}</td>
       <td>${tx.description}</td>
       <td>${tx.amount < 0 ? `-$${Math.abs(tx.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}` : `+$${tx.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`}</td>
-      <td>${typeof tx.status === 'number' ? `$${tx.status.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : tx.status}</td>
+      <td>${typeof tx.balance === 'number' ? `$${tx.balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : tx.balance}</td>
       <td class="admin-action" style="display: ${isAdmin ? 'table-cell' : 'none'};">
         <button class="delete-btn" style="display: ${isAdmin ? 'inline-block' : 'none'}; background:red; color:white; border:none; padding:5px 10px; border-radius:4px;" onclick="deleteTransaction('${tx._id}')">Delete</button>
       </td>
@@ -110,7 +106,6 @@ async function deleteTransaction(id) {
 window.addEventListener('DOMContentLoaded', async () => {
   const res = await fetch('https://equitybackend.onrender.com/api/transactions/addadminbalance');
   const data = await res.json();
-
   document.getElementById('balance-amount').textContent = `$${data.available.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
   fetchAndRenderTransactions();
 });
