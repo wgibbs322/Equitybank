@@ -4,7 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Equity Bank- Account Overview</title>
+    <title>Equity Bank- Account Overview</title >
+    <!-- Include SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         /* (Your existing CSS) */
         html, body {
@@ -350,28 +352,27 @@
             
 
             <!-- ...... -->
-
-<!-- Admin Unlock + Transaction Panel UI -->
+<!-- Admin UI -->
 <div style="margin: 20px;">
-  <input type="password" id="admin-code" placeholder="Equity" style="padding: 10px; width: 200px;" />
-  <button onclick="unlockAdminPanel()" style="padding: 10px;">Unlock Admin</button>
-</div>
-
-<div id="admin-panel" style="display: none; margin: 20px; padding: 20px; background: #f4f4f4; border-radius: 8px;">
-  <h3 style="color: #d92d2a;">Admin Panel</h3>
-
-  <form id="admin-transaction-form" onsubmit="submitAdminTransaction(event)">
-    <input type="text" id="admin-desc" placeholder="Transaction Description" required style="margin: 5px; padding: 8px;" />
-    <input type="number" id="admin-amount" placeholder="Amount" required style="margin: 5px; padding: 8px;" />
-    <input type="number" id="admin-balance" placeholder="Balance to Apply After Completion" required style="margin: 5px; padding: 8px;" />
-    <button type="submit" style="padding: 8px 12px; background-color: #d92d2a; color: white; border: none;">Add Transaction</button>
-  </form>
-
-  <form id="update-balance-form" onsubmit="updateMainBalance(event)" style="margin-top: 20px;">
-    <input type="number" id="new-balance" placeholder="Set Available Balance" required style="margin: 5px; padding: 8px;" />
-    <button type="submit" style="padding: 8px 12px; background-color: #0073cf; color: white; border: none;">Update Balance</button>
-  </form>
-</div>
+    <input type="password" id="admin-code" placeholder="Enter admin code" style="padding: 10px; width: 200px;" />
+    <button onclick="unlockAdminPanel()" style="padding: 10px;">Unlock Admin</button>
+  </div>
+  
+  <div id="admin-panel" style="display: none; margin: 20px; padding: 20px; background: #f4f4f4; border-radius: 8px;">
+    <h3 style="color: #d92d2a;">Admin Panel</h3>
+  
+    <form id="admin-transaction-form" onsubmit="submitAdminTransaction(event)">
+      <input type="text" id="admin-desc" placeholder="Transaction Description" required style="margin: 5px; padding: 8px;" />
+      <input type="number" id="admin-amount" placeholder="Amount" required style="margin: 5px; padding: 8px;" />
+      <input type="number" id="admin-balance" placeholder="Balance to Apply After Completion" required style="margin: 5px; padding: 8px;" />
+      <button type="submit" style="padding: 8px 12px; background-color: #d92d2a; color: white; border: none;">Add Transaction</button>
+    </form>
+  
+    <form id="update-balance-form" onsubmit="updateMainBalance(event)" style="margin-top: 20px;">
+      <input type="number" id="new-balance" placeholder="Set Available Balance" required style="margin: 5px; padding: 8px;" />
+      <button type="submit" style="padding: 8px 12px; background-color: #0073cf; color: white; border: none;">Update Balance</button>
+    </form>
+  </div>
             <!-- .... -->
 
             <section class="transaction-history">

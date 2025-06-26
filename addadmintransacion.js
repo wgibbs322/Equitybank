@@ -5,8 +5,11 @@ function unlockAdminPanel() {
   if (code === '3237') {
     isAdmin = true;
     document.getElementById('admin-panel').style.display = 'block';
+
+    // Show admin table columns and delete buttons if they exist already
     document.querySelectorAll('.admin-action').forEach(el => el.style.display = 'table-cell');
     document.querySelectorAll('.delete-btn').forEach(btn => btn.style.display = 'inline-block');
+
     Swal.fire("Unlocked", "Admin panel activated!", "success");
   } else {
     Swal.fire("Access Denied", "Incorrect admin code", "error");
@@ -31,7 +34,7 @@ async function submitAdminTransaction(e) {
     if (response.ok) {
       Swal.fire("Added", "Transaction added and will update after 3 hours.", "info");
       document.getElementById('admin-transaction-form').reset();
-      fetchAndRenderTransactions(); // Refresh the table
+      fetchAndRenderTransactions();
     } else {
       throw new Error(data.message);
     }
@@ -107,7 +110,7 @@ async function deleteTransaction(id) {
 window.addEventListener('DOMContentLoaded', async () => {
   const res = await fetch('https://equitybackend.onrender.com/api/transactions/addadminbalance');
   const data = await res.json();
-  document.getElementById('balance-amount').textContent = `$${data.available.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
 
+  document.getElementById('balance-amount').textContent = `$${data.available.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
   fetchAndRenderTransactions();
 });
