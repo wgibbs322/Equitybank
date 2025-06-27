@@ -5,17 +5,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const balanceElement = document.getElementById('balance-amount');
   const API_BASE = 'https://equitybackend.onrender.com/api/admin';
 
-  // Helper: format currency
   const formatCurrency = amount => {
     return amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
   };
 
-  // ✅ Safe date formatting with fallback
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return !dateString || isNaN(date.getTime())
-      ? 'No Date'
-      : date.toLocaleDateString('en-US');
+    return isNaN(date.getTime()) ? 'Invalid Date' : date.toLocaleDateString('en-US');
   };
 
   // Admin Code Check
@@ -35,11 +31,15 @@ document.addEventListener('DOMContentLoaded', () => {
       const res = await fetch(`${API_BASE}/addadmingetAllTransactions`);
       const data = await res.json();
 
-      // ❗ Only remove dynamically added rows (not static ones)
+      // Only remove dynamically added rows
       transactionBody.querySelectorAll('tr:not(.static-row)').forEach(tr => tr.remove());
 
       data.forEach(tx => {
+        if (!tx._id) return; // Safety check
+        if (document.querySelector(`[data-id="${tx._id}"]`)) return; // Prevent duplicate
+
         const tr = document.createElement('tr');
+        tr.setAttribute('data-id', tx._id);
         tr.innerHTML = `
           <td>${formatDate(tx.createdAt)}</td>
           <td>${tx.description}</td>
@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
         transactionBody.appendChild(tr);
       });
 
-      checkAdminCode(); // ensure visibility of admin controls if admin code is active
+      checkAdminCode();
     } catch (err) {
       console.error('Error loading transactions:', err);
     }
@@ -71,23 +71,28 @@ document.addEventListener('DOMContentLoaded', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ description: desc, amount: amt, balanceAfter })
       });
-      const data = await res.json();
 
+      const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Error adding transaction');
 
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${formatDate(data.createdAt)}</td>
-        <td>${data.description}</td>
-        <td>${amt >= 0 ? '+' : '-'}${formatCurrency(Math.abs(amt))}</td>
-        <td>${data.status}</td>
-        <td class="admin-controls" style="display: table-cell;">
-          <button onclick="deleteTransaction('${data._id}', this)">Delete</button>
-        </td>
-      `;
-      transactionBody.prepend(tr);
+      // Prevent duplicate display
+      if (!document.querySelector(`[data-id="${data._id}"]`)) {
+        const tr = document.createElement('tr');
+        tr.setAttribute('data-id', data._id);
+        tr.innerHTML = `
+          <td>${formatDate(data.createdAt)}</td>
+          <td>${data.description}</td>
+          <td>${amt >= 0 ? '+' : '-'}${formatCurrency(Math.abs(amt))}</td>
+          <td>${data.status}</td>
+          <td class="admin-controls" style="display: table-cell;">
+            <button onclick="deleteTransaction('${data._id}', this)">Delete</button>
+          </td>
+        `;
+        transactionBody.prepend(tr);
+      }
+
       document.getElementById('admin-transaction-form').reset();
-      checkAdminCode(); // Re-check for visibility
+      checkAdminCode();
     } catch (err) {
       alert(err.message);
     }
@@ -118,8 +123,8 @@ document.addEventListener('DOMContentLoaded', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ amount: newAmount })
       });
-      const data = await res.json();
 
+      const data = await res.json();
       if (!res.ok) throw new Error(data.message);
       balanceElement.textContent = formatCurrency(data.amount);
       document.getElementById('update-balance-form').reset();
@@ -128,7 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  // Load Current Balance
+  // Load Balance
   const loadBalance = async () => {
     try {
       const res = await fetch(`${API_BASE}/addadmingetBalance`);
