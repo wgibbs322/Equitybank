@@ -12,10 +12,20 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   // Check for admin code
+  // window.checkAdminCode = () => {
+  //   if (adminCodeInput.value === '3237') {
+  //     adminPanel.style.display = 'block';
+  //     document.querySelectorAll('.admin-controls').forEach(el => el.style.display = 'table-cell');
+  //   }
+  // };
+
   window.checkAdminCode = () => {
     if (adminCodeInput.value === '3237') {
       adminPanel.style.display = 'block';
       document.querySelectorAll('.admin-controls').forEach(el => el.style.display = 'table-cell');
+    } else {
+      adminPanel.style.display = 'none';
+      document.querySelectorAll('.admin-controls').forEach(el => el.style.display = 'none');
     }
   };
 
