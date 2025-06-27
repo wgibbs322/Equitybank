@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  // Submit transaction
+  // Submit new transaction
   window.submitAdminTransaction = async (e) => {
     e.preventDefault();
     const desc = document.getElementById('admin-desc').value;
@@ -33,14 +33,15 @@ document.addEventListener('DOMContentLoaded', () => {
         body: JSON.stringify({ description: desc, amount: amt, balanceAfter })
       });
       const data = await res.json();
+
       if (!res.ok) throw new Error(data.message || 'Error adding transaction');
 
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td>${formatDate(data.createdAt)}</td>
+        <td>${new Date(data.createdAt).toLocaleDateString()}</td>
         <td>${data.description}</td>
         <td>${amt > 0 ? '+' : ''}${formatCurrency(amt)}</td>
-        <td>${data.status || formatCurrency(data.balanceAfter)}</td>
+        <td>${data.status}</td>
         <td class="admin-controls"><button onclick="deleteTransaction('${data._id}', this)">Delete</button></td>
       `;
       transactionBody.prepend(tr);
