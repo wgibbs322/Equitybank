@@ -16,9 +16,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (adminCodeInput.value === '3237') {
       adminPanel.style.display = 'block';
       document.querySelectorAll('.admin-controls').forEach(el => el.style.display = 'table-cell');
-    } else {
-      adminPanel.style.display = 'none';
-      document.querySelectorAll('.admin-controls').forEach(el => el.style.display = 'none');
     }
   };
 
@@ -45,9 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <td>${data.description}</td>
         <td>${amt > 0 ? '+' : ''}${formatCurrency(amt)}</td>
         <td>${data.status}</td>
-        <td class="admin-controls" style="display: table-cell;">
-          <button onclick="deleteTransaction('${data._id}', this)">Delete</button>
-        </td>
+        <td class="admin-controls"><button onclick="deleteTransaction('${data._id}', this)">Delete</button></td>
       `;
       transactionBody.prepend(tr);
       document.getElementById('admin-transaction-form').reset();
@@ -101,34 +96,4 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   loadBalance();
-
-  // ✅ Added this to load transactions and ensure delete buttons show properly
-  const loadTransactions = async () => {
-    try {
-      const res = await fetch(`${API_BASE}/addadmingetAllTransactions`);
-      const data = await res.json();
-
-      transactionBody.innerHTML = "";
-
-      data.forEach(tx => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${new Date(tx.createdAt).toLocaleDateString()}</td>
-          <td>${tx.description}</td>
-          <td>${tx.amount >= 0 ? '+' : '-'}${formatCurrency(Math.abs(tx.amount))}</td>
-          <td>${tx.status === "Applied" && tx.balanceAfter ? formatCurrency(tx.balanceAfter) : tx.status}</td>
-          <td class="admin-controls" style="display: none;">
-            <button onclick="deleteTransaction('${tx._id}', this)">Delete</button>
-          </td>
-        `;
-        transactionBody.appendChild(tr);
-      });
-
-      checkAdminCode(); // 🔥 Fix: force check again to show delete column
-    } catch (err) {
-      console.error('Error loading transactions:', err);
-    }
-  };
-
-  loadTransactions();
 });
