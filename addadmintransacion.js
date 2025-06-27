@@ -6,12 +6,18 @@ document.addEventListener('DOMContentLoaded', () => {
   const balanceElement = document.getElementById('balance-amount');
   const API_BASE = 'https://equitybackend.onrender.com/api/admin';
 
-  // Helper for currency formatting
+  // Helper: format currency
   const formatCurrency = amount => {
     return amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
   };
 
-  // Check for admin code
+  // Helper: format date
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return isNaN(date.getTime()) ? "Invalid Date" : date.toLocaleDateString();
+  };
+
+  // Admin Code Check
   window.checkAdminCode = () => {
     if (adminCodeInput.value === '3237') {
       adminPanel.style.display = 'block';
@@ -22,7 +28,36 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  // Submit new transaction
+  // Load Transactions
+  const loadTransactions = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/addadmingetAllTransactions`);
+      const data = await res.json();
+
+      transactionBody.innerHTML = '';
+
+      data.forEach(tx => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${formatDate(tx.createdAt)}</td>
+          <td>${tx.description}</td>
+          <td>${tx.amount >= 0 ? '+' : '-'}${formatCurrency(Math.abs(tx.amount))}</td>
+          <td>${tx.status === 'Applied' && tx.balanceAfter ? formatCurrency(tx.balanceAfter) : tx.status}</td>
+          <td class="admin-controls" style="display: none;">
+            <button onclick="deleteTransaction('${tx._id}', this)">Delete</button>
+          </td>
+        `;
+        transactionBody.appendChild(tr);
+      });
+
+      // Show delete buttons if admin code is correct
+      checkAdminCode();
+    } catch (err) {
+      console.error('Error loading transactions:', err);
+    }
+  };
+
+  // Add Transaction
   window.submitAdminTransaction = async (e) => {
     e.preventDefault();
     const desc = document.getElementById('admin-desc').value;
@@ -41,23 +76,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td>${new Date(data.createdAt).toLocaleDateString()}</td>
+        <td>${formatDate(data.createdAt)}</td>
         <td>${data.description}</td>
-        <td>${amt > 0 ? '+' : ''}${formatCurrency(amt)}</td>
+        <td>${amt >= 0 ? '+' : '-'}${formatCurrency(Math.abs(amt))}</td>
         <td>${data.status}</td>
-        <td class="admin-controls"><button onclick="deleteTransaction('${data._id}', this)">Delete</button></td>
+        <td class="admin-controls" style="display: table-cell;">
+          <button onclick="deleteTransaction('${data._id}', this)">Delete</button>
+        </td>
       `;
       transactionBody.prepend(tr);
       document.getElementById('admin-transaction-form').reset();
+      checkAdminCode(); // Re-check for visibility
     } catch (err) {
       alert(err.message);
     }
   };
 
-  // Delete transaction
+  // Delete Transaction
   window.deleteTransaction = async (id, btn) => {
     try {
-      const res = await fetch(`${API_BASE}/addadmindeleteTransaction/${id}`, { method: 'DELETE' });
+      const res = await fetch(`${API_BASE}/addadmindeleteTransaction/${id}`, {
+        method: 'DELETE'
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
       btn.closest('tr').remove();
@@ -66,7 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  // Update available balance
+  // Update Balance
   window.updateMainBalance = async (e) => {
     e.preventDefault();
     const newAmount = parseFloat(document.getElementById('new-balance').value);
@@ -87,17 +127,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  // Load current balance
+  // Load Current Balance
   const loadBalance = async () => {
     try {
       const res = await fetch(`${API_BASE}/addadmingetBalance`);
       const data = await res.json();
-      if (data.amount) balanceElement.textContent = formatCurrency(data.amount);
+      if (data.amount !== undefined) {
+        balanceElement.textContent = formatCurrency(data.amount);
+      }
     } catch (err) {
       console.error('Error fetching balance:', err);
     }
   };
 
+  // Initial Load
   loadBalance();
-  checkAdminCode(); // ✅ Ensures delete button appears if code is entered
+  loadTransactions();
 });
