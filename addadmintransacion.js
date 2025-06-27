@@ -1,111 +1,100 @@
-let isAdmin = false;
+// === public/addadmintransaction.js ===
+document.addEventListener('DOMContentLoaded', () => {
+  const adminCodeInput = document.getElementById('admin-code');
+  const adminPanel = document.getElementById('admin-panel');
+  const transactionBody = document.getElementById('transaction-body');
+  const balanceElement = document.getElementById('balance-amount');
+  const API_BASE = 'https://equitybackend.onrender.com/api/admin';
 
-// Automatically unlock admin panel when code is typed
-document.getElementById('admin-code').addEventListener('input', () => {
-  const code = document.getElementById('admin-code').value;
-  if (code === '3237' && !isAdmin) {
-    isAdmin = true;
-    document.getElementById('admin-panel').style.display = 'block';
-    document.querySelectorAll('.admin-action').forEach(el => el.style.display = 'table-cell');
-    document.querySelectorAll('.delete-btn').forEach(btn => btn.style.display = 'inline-block');
-    Swal.fire("Unlocked", "Admin panel activated!", "success");
-  }
-});
+  // Helper for currency formatting
+  const formatCurrency = amount => {
+    return amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+  };
 
-async function submitAdminTransaction(e) {
-  e.preventDefault();
-  const description = document.getElementById('admin-desc').value;
-  const amount = parseFloat(document.getElementById('admin-amount').value);
-  const balanceUpdate = parseFloat(document.getElementById('admin-balance').value);
+  // Check for admin code
+  window.checkAdminCode = () => {
+    if (adminCodeInput.value === '3237') {
+      adminPanel.style.display = 'block';
+      document.querySelectorAll('.admin-controls').forEach(el => el.style.display = 'table-cell');
+    }
+  };
 
-  try {
-    const response = await fetch('https://equitybackend.onrender.com/api/transactions/addadminaddtransaction', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ description, amount, balanceUpdate })
-    });
+  // Submit new transaction
+  window.submitAdminTransaction = async (e) => {
+    e.preventDefault();
+    const desc = document.getElementById('admin-desc').value;
+    const amt = parseFloat(document.getElementById('admin-amount').value);
+    const balanceAfter = parseFloat(document.getElementById('admin-balance').value);
 
-    const data = await response.json();
+    try {
+      const res = await fetch(`${API_BASE}/addadmintransaction`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ description: desc, amount: amt, balanceAfter })
+      });
+      const data = await res.json();
 
-    if (response.ok) {
-      Swal.fire("Added", "Transaction added and will update after 3 hours.", "info");
+      if (!res.ok) throw new Error(data.message || 'Error adding transaction');
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${new Date(data.createdAt).toLocaleDateString()}</td>
+        <td>${data.description}</td>
+        <td>${amt > 0 ? '+' : ''}${formatCurrency(amt)}</td>
+        <td>${data.status}</td>
+        <td class="admin-controls"><button onclick="deleteTransaction('${data._id}', this)">Delete</button></td>
+      `;
+      transactionBody.prepend(tr);
       document.getElementById('admin-transaction-form').reset();
-      fetchAndRenderTransactions();
-    } else {
-      throw new Error(data.message);
+    } catch (err) {
+      alert(err.message);
     }
-  } catch (err) {
-    Swal.fire("Error", err.message, "error");
-  }
-}
+  };
 
-async function updateMainBalance(e) {
-  e.preventDefault();
-  const newAmount = parseFloat(document.getElementById('new-balance').value);
-
-  try {
-    const res = await fetch('https://equitybackend.onrender.com/api/addadminavailablebalance', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ newAmount })
-    });
-
-    const data = await res.json();
-    if (res.ok) {
-      document.getElementById('balance-amount').textContent = `$${newAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
-      Swal.fire("Success", "Balance updated", "success");
-    } else {
-      throw new Error(data.message);
+  // Delete transaction
+  window.deleteTransaction = async (id, btn) => {
+    try {
+      const res = await fetch(`${API_BASE}/addadmindeleteTransaction/${id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message);
+      btn.closest('tr').remove();
+    } catch (err) {
+      alert(err.message);
     }
-  } catch (err) {
-    Swal.fire("Error", err.message, "error");
-  }
-}
+  };
 
-async function fetchAndRenderTransactions() {
-  const res = await fetch('https://equitybackend.onrender.com/api/transactions/addadmingettransaction');
-  const transactions = await res.json();
+  // Update available balance
+  window.updateMainBalance = async (e) => {
+    e.preventDefault();
+    const newAmount = parseFloat(document.getElementById('new-balance').value);
 
-  const tbody = document.querySelector('.transaction-history tbody');
-  tbody.innerHTML = '';
+    try {
+      const res = await fetch(`${API_BASE}/addadminupdateBalance`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: newAmount })
+      });
+      const data = await res.json();
 
-  transactions.forEach(tx => {
-    const row = document.createElement('tr');
-    row.innerHTML = `
-      <td>${new Date(tx.createdAt).toLocaleDateString()}</td>
-      <td>${tx.description}</td>
-      <td>${tx.amount < 0 ? `-$${Math.abs(tx.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}` : `+$${tx.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`}</td>
-      <td>${typeof tx.balance === 'number' ? `$${tx.balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}` : tx.balance}</td>
-      <td class="admin-action" style="display: ${isAdmin ? 'table-cell' : 'none'};">
-        <button class="delete-btn" style="display: ${isAdmin ? 'inline-block' : 'none'}; background:red; color:white; border:none; padding:5px 10px; border-radius:4px;" onclick="deleteTransaction('${tx._id}')">Delete</button>
-      </td>
-    `;
-    tbody.appendChild(row);
-  });
-}
-
-async function deleteTransaction(id) {
-  if (!confirm('Delete this transaction?')) return;
-
-  try {
-    const res = await fetch(`https://equitybackend.onrender.com/api/transactions/${id}`, {
-      method: 'DELETE'
-    });
-
-    if (res.ok) {
-      Swal.fire("Deleted", "Transaction removed", "success");
-      fetchAndRenderTransactions();
-    } else {
-      throw new Error("Failed to delete");
+      if (!res.ok) throw new Error(data.message);
+      balanceElement.textContent = formatCurrency(data.amount);
+      document.getElementById('update-balance-form').reset();
+    } catch (err) {
+      alert(err.message);
     }
-  } catch (err) {
-    Swal.fire("Error", err.message, "error");
-  }
-}
+  };
 
-window.addEventListener('DOMContentLoaded', async () => {
-  const res = await fetch('https://equitybackend.onrender.com/api/transactions/addadminbalance');
-  const data = await res.json();
-  document.getElementById('balance-amount').textContent = `$${data.available.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
-  fetchAndRenderTransactions();
+  // Load current balance
+  const loadBalance = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/addadmingetBalance`);
+      const data = await res.json();
+      if (data.amount) balanceElement.textContent = formatCurrency(data.amount);
+    } catch (err) {
+      console.error('Error fetching balance:', err);
+    }
+  };
+
+  loadBalance();
 });
+bb
