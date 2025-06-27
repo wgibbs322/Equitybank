@@ -12,43 +12,6 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   // Check for admin code
-  // window.checkAdminCode = () => {
-  //   if (adminCodeInput.value === '3237') {
-  //     adminPanel.style.display = 'block';
-  //     document.querySelectorAll('.admin-controls').forEach(el => el.style.display = 'table-cell');
-  //   }
-  // };
-
-
-   // Load Transactions
-   const loadTransactions = async () => {
-    try {
-      const res = await fetch(`${API_BASE}/addadmingetAllTransactions`);
-      const data = await res.json();
-
-      transactionBody.innerHTML = '';
-
-      data.forEach(tx => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${formatDate(tx.createdAt)}</td>
-          <td>${tx.description}</td>
-          <td>${tx.amount >= 0 ? '+' : '-'}${formatCurrency(Math.abs(tx.amount))}</td>
-          <td>${tx.status === 'Applied' && tx.balanceAfter ? formatCurrency(tx.balanceAfter) : tx.status}</td>
-          <td class="admin-controls" style="display: none;">
-            <button onclick="deleteTransaction('${tx._id}', this)">Delete</button>
-          </td>
-        `;
-        transactionBody.appendChild(tr);
-      });
-
-      // Show delete buttons if admin code is correct
-      checkAdminCode();
-    } catch (err) {
-      console.error('Error loading transactions:', err);
-    }
-  };
-
   window.checkAdminCode = () => {
     if (adminCodeInput.value === '3237') {
       adminPanel.style.display = 'block';
@@ -136,5 +99,5 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   loadBalance();
-  loadTransactions(); // ← add this
+  checkAdminCode(); // ✅ Ensures delete button appears if code is entered
 });
