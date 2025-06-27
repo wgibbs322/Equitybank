@@ -5,43 +5,36 @@ document.addEventListener('DOMContentLoaded', () => {
   const balanceElement = document.getElementById('balance-amount');
   const API_BASE = 'https://equitybackend.onrender.com/api/admin';
 
-  // Format currency
-  const formatCurrency = amount => {
-    return amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
-  };
+  const formatCurrency = amount =>
+    amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
 
-  // Format date to MM/DD/YYYY
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    if (isNaN(date.getTime())) return 'Invalid Date';
-
-    return date.toLocaleDateString('en-US', {
+    return isNaN(date.getTime()) ? 'Invalid Date' : date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit'
     });
   };
 
-  // Check admin code
   window.checkAdminCode = () => {
-    if (adminCodeInput.value === '3237') {
-      adminPanel.style.display = 'block';
-      document.querySelectorAll('.admin-controls').forEach(el => el.style.display = 'table-cell');
-    } else {
-      adminPanel.style.display = 'none';
-      document.querySelectorAll('.admin-controls').forEach(el => el.style.display = 'none');
-    }
+    const isAdmin = adminCodeInput.value === '3237';
+    adminPanel.style.display = isAdmin ? 'block' : 'none';
+    document.querySelectorAll('.admin-controls').forEach(el => {
+      el.style.display = isAdmin ? 'table-cell' : 'none';
+    });
   };
 
-  // Load transactions from backend
+  // ✅ Always clear and reload full transaction list from backend
   const loadTransactions = async () => {
     try {
       const res = await fetch(`${API_BASE}/addadmingetAllTransactions`);
       const data = await res.json();
 
-      // 🔁 Remove previously added dynamic rows
+      // ❌ Clear previously added dynamic rows
       transactionBody.querySelectorAll('tr.dynamic-row').forEach(tr => tr.remove());
 
+      // ✅ Add new rows
       data.forEach(tx => {
         if (!tx._id) return;
 
@@ -66,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  // Submit new transaction (only reload, don't prepend manually)
+  // ✅ Submit transaction: only reload, DO NOT manually add row
   window.submitAdminTransaction = async (e) => {
     e.preventDefault();
     const desc = document.getElementById('admin-desc').value;
@@ -83,7 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Error adding transaction');
 
-      // ✅ Reload to avoid duplication and ensure date is present
+      // ✅ Reload to get proper createdAt and avoid duplicates
       await loadTransactions();
 
       document.getElementById('admin-transaction-form').reset();
@@ -93,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  // Delete transaction
+  // ✅ Delete
   window.deleteTransaction = async (id, btn) => {
     try {
       const res = await fetch(`${API_BASE}/addadmindeleteTransaction/${id}`, {
@@ -108,7 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  // Update balance
+  // ✅ Update balance
   window.updateMainBalance = async (e) => {
     e.preventDefault();
     const newAmount = parseFloat(document.getElementById('new-balance').value);
@@ -130,7 +123,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  // Load balance
   const loadBalance = async () => {
     try {
       const res = await fetch(`${API_BASE}/addadmingetBalance`);
@@ -143,7 +135,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  // Initial load
   loadBalance();
   loadTransactions();
 });
