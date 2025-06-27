@@ -1,4 +1,3 @@
-// === public/addadmintransaction.js ===
 document.addEventListener('DOMContentLoaded', () => {
   const adminCodeInput = document.getElementById('admin-code');
   const adminPanel = document.getElementById('admin-panel');
@@ -34,7 +33,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const res = await fetch(`${API_BASE}/addadmingetAllTransactions`);
       const data = await res.json();
 
-      transactionBody.innerHTML = '';
+      // ❗ Only remove dynamically added rows (not static ones)
+      transactionBody.querySelectorAll('tr:not(.static-row)').forEach(tr => tr.remove());
 
       data.forEach(tx => {
         const tr = document.createElement('tr');
@@ -50,8 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
         transactionBody.appendChild(tr);
       });
 
-      // Show delete buttons if admin code is correct
-      checkAdminCode();
+      checkAdminCode(); // ensure visibility of admin controls if admin code is active
     } catch (err) {
       console.error('Error loading transactions:', err);
     }
