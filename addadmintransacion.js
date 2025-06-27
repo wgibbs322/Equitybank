@@ -5,8 +5,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const balanceElement = document.getElementById('balance-amount');
   const API_BASE = 'https://equitybackend.onrender.com/api/admin';
 
-  const formatCurrency = amount =>
-    amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+  const formatCurrency = amount => amount.toLocaleString('en-US', {
+    style: 'currency',
+    currency: 'USD'
+  });
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -17,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   };
 
+  // Admin code unlock
   window.checkAdminCode = () => {
     const isAdmin = adminCodeInput.value === '3237';
     adminPanel.style.display = isAdmin ? 'block' : 'none';
@@ -25,27 +28,27 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   };
 
-  // ✅ Always clear and reload full transaction list from backend
+  // ✅ Load transactions only from backend
   const loadTransactions = async () => {
     try {
       const res = await fetch(`${API_BASE}/addadmingetAllTransactions`);
       const data = await res.json();
 
-      // ❌ Clear previously added dynamic rows
+      // ❌ Clear dynamic rows only (leave static rows untouched)
       transactionBody.querySelectorAll('tr.dynamic-row').forEach(tr => tr.remove());
 
-      // ✅ Add new rows
+      // ✅ Append backend data as new rows
       data.forEach(tx => {
-        if (!tx._id) return;
+        if (!tx._id || !tx.createdAt) return;
 
         const tr = document.createElement('tr');
         tr.classList.add('dynamic-row');
         tr.setAttribute('data-id', tx._id);
         tr.innerHTML = `
-          <td>${tx.createdAt ? formatDate(tx.createdAt) : 'Invalid Date'}</td>
+          <td>${formatDate(tx.createdAt)}</td>
           <td>${tx.description}</td>
           <td>${tx.amount >= 0 ? '+' : '-'}${formatCurrency(Math.abs(tx.amount))}</td>
-          <td>${tx.status === 'Applied' && tx.balanceAfter ? formatCurrency(tx.balanceAfter) : tx.status}</td>
+          <td>${tx.status === 'Applied' ? formatCurrency(tx.balanceAfter) : tx.status}</td>
           <td class="admin-controls" style="display: none;">
             <button onclick="deleteTransaction('${tx._id}', this)">Delete</button>
           </td>
@@ -59,7 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  // ✅ Submit transaction: only reload, DO NOT manually add row
+  // ✅ Submit transaction — only reload list
   window.submitAdminTransaction = async (e) => {
     e.preventDefault();
     const desc = document.getElementById('admin-desc').value;
@@ -76,11 +79,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Error adding transaction');
 
-      // ✅ Reload to get proper createdAt and avoid duplicates
-      await loadTransactions();
-
       document.getElementById('admin-transaction-form').reset();
-      checkAdminCode();
+
+      // ✅ No manual row insertion — reload all
+      await loadTransactions();
     } catch (err) {
       alert(err.message);
     }
@@ -123,6 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+  // ✅ Load balance
   const loadBalance = async () => {
     try {
       const res = await fetch(`${API_BASE}/addadmingetBalance`);
@@ -135,6 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+  // ✅ Initial run
   loadBalance();
   loadTransactions();
 });
