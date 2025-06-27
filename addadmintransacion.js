@@ -1,4 +1,3 @@
-// === public/addadmintransaction.js ===
 document.addEventListener('DOMContentLoaded', () => {
   const adminCodeInput = document.getElementById('admin-code');
   const adminPanel = document.getElementById('admin-panel');
@@ -6,63 +5,45 @@ document.addEventListener('DOMContentLoaded', () => {
   const balanceElement = document.getElementById('balance-amount');
   const API_BASE = 'https://equitybackend.onrender.com/api/admin';
 
-  // === Helper: Format Currency ===
+  let isAdmin = false; // Track admin access
+
+  // Format currency to USD
   const formatCurrency = amount => {
     return amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
   };
 
-  // === Helper: Format Date ===
-  const formatDate = (dateStr) => {
-    if (!dateStr) return 'No Date';
-    const date = new Date(dateStr);
-    return isNaN(date.getTime())
-      ? 'Invalid Date'
-      : date.toLocaleDateString(undefined, {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric'
-        });
+  // Format date safely
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return isNaN(date.getTime()) ? "N/A" : date.toLocaleDateString('en-US');
   };
 
-  // === Admin Code Check ===
+  // Render a single transaction row
+  const renderTransactionRow = (tx) => {
+    const formattedDate = formatDate(tx.createdAt || tx.date);
+    return `
+      <tr>
+        <td>${formattedDate}</td>
+        <td>${tx.description}</td>
+        <td>${tx.amount >= 0 ? "+" : "-"}${formatCurrency(Math.abs(tx.amount))}</td>
+        <td>${tx.status || 'Pending'}</td>
+        <td class="admin-controls" style="${isAdmin ? '' : 'display:none'}">
+          <button onclick="deleteTransaction('${tx._id}', this)">Delete</button>
+        </td>
+      </tr>
+    `;
+  };
+
+  // Show admin panel
   window.checkAdminCode = () => {
     if (adminCodeInput.value === '3237') {
+      isAdmin = true;
       adminPanel.style.display = 'block';
       document.querySelectorAll('.admin-controls').forEach(el => el.style.display = 'table-cell');
-    } else {
-      adminPanel.style.display = 'none';
-      document.querySelectorAll('.admin-controls').forEach(el => el.style.display = 'none');
     }
   };
 
-  // === Load Transactions ===
-  const loadTransactions = async () => {
-    try {
-      const res = await fetch(`${API_BASE}/addadmingetAllTransactions`);
-      const data = await res.json();
-
-      transactionBody.innerHTML = "";
-      data.forEach(tx => {
-        transactionBody.innerHTML += `
-          <tr>
-            <td>${formatDate(tx.createdAt)}</td>
-            <td>${tx.description}</td>
-            <td>${tx.amount >= 0 ? '+' : '-'}${formatCurrency(Math.abs(tx.amount))}</td>
-            <td>${tx.status === "Applied" && tx.balanceAfter ? formatCurrency(tx.balanceAfter) : tx.status}</td>
-            <td class="admin-controls" style="display: none;">
-              <button onclick="deleteTransaction('${tx._id}', this)">Delete</button>
-            </td>
-          </tr>
-        `;
-      });
-
-      checkAdminCode();
-    } catch (err) {
-      console.error('Error loading transactions:', err);
-    }
-  };
-
-  // === Submit New Transaction ===
+  // Submit a new admin transaction
   window.submitAdminTransaction = async (e) => {
     e.preventDefault();
     const desc = document.getElementById('admin-desc').value;
@@ -75,19 +56,20 @@ document.addEventListener('DOMContentLoaded', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ description: desc, amount: amt, balanceAfter })
       });
-      const data = await res.json();
 
+      const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Error adding transaction');
 
-      Swal.fire("Success!", "Transaction added", "success");
-      loadTransactions();
+      const tr = document.createElement('tr');
+      tr.innerHTML = renderTransactionRow(data);
+      transactionBody.prepend(tr);
       document.getElementById('admin-transaction-form').reset();
     } catch (err) {
-      Swal.fire("Error", err.message, "error");
+      alert(err.message);
     }
   };
 
-  // === Delete Transaction ===
+  // Delete a transaction
   window.deleteTransaction = async (id, btn) => {
     try {
       const res = await fetch(`${API_BASE}/addadmindeleteTransaction/${id}`, {
@@ -95,15 +77,13 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
-
-      Swal.fire("Deleted!", "Transaction removed", "success");
       btn.closest('tr').remove();
     } catch (err) {
-      Swal.fire("Error", err.message, "error");
+      alert(err.message);
     }
   };
 
-  // === Update Main Balance ===
+  // Update the available balance
   window.updateMainBalance = async (e) => {
     e.preventDefault();
     const newAmount = parseFloat(document.getElementById('new-balance').value);
@@ -114,30 +94,45 @@ document.addEventListener('DOMContentLoaded', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ amount: newAmount })
       });
-      const data = await res.json();
 
+      const data = await res.json();
       if (!res.ok) throw new Error(data.message);
       balanceElement.textContent = formatCurrency(data.amount);
       document.getElementById('update-balance-form').reset();
     } catch (err) {
-      Swal.fire("Error", err.message, "error");
+      alert(err.message);
     }
   };
 
-  // === Load Current Balance ===
+  // Load all existing transactions
+  const loadTransactions = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/addadmingetTransactions`);
+      const data = await res.json();
+      if (!Array.isArray(data)) throw new Error('Invalid transaction list');
+      transactionBody.innerHTML = ''; // Clear existing
+      data.reverse().forEach(tx => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = renderTransactionRow(tx);
+        transactionBody.appendChild(tr);
+      });
+    } catch (err) {
+      console.error('Error loading transactions:', err.message);
+    }
+  };
+
+  // Load current balance
   const loadBalance = async () => {
     try {
       const res = await fetch(`${API_BASE}/addadmingetBalance`);
       const data = await res.json();
-      if (data.amount !== undefined) {
-        balanceElement.textContent = formatCurrency(data.amount);
-      }
+      if (data.amount) balanceElement.textContent = formatCurrency(data.amount);
     } catch (err) {
       console.error('Error fetching balance:', err);
     }
   };
 
-  // === Initial Load ===
+  // Initial data load
   loadBalance();
   loadTransactions();
 });
