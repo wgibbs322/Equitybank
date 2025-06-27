@@ -9,11 +9,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const formatCurrency = amount => {
     return amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
   };
-  
+
+  // ✅ Safe date formatting with fallback
   const formatDate = (dateString) => {
-    if (!dateString) return "Invalid Date";
     const date = new Date(dateString);
-    return isNaN(date.getTime()) ? "Invalid Date" : date.toLocaleDateString('en-US');
+    return !dateString || isNaN(date.getTime())
+      ? 'No Date'
+      : date.toLocaleDateString('en-US');
   };
 
   // Admin Code Check
